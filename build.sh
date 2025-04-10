@@ -62,9 +62,9 @@ if [ "$windows_flag" == "true" ]; then
 		run_flag=false
 	fi
 
-	windows_out_dir="/mnt/c/Users/$windows_user/Desktop/$project_name"
+	windows_out_dir="/mnt/c/Users/$windows_user/Desktop/game_engine/$project_name"
 	if [ ! -d "$windows_out_dir" ]; then
-		mkdir $windows_out_dir
+		mkdir -p $windows_out_dir
 	fi
 	out_name="$out_name.exe"
 
@@ -76,7 +76,7 @@ if [ "$windows_flag" == "true" ]; then
 	echo "tags: $tags"
 	echo "Building for windows"
 	set -x
-	go list -f '{{.GoFiles}}' $tags ./src ./src/build
+	GOOS=windows go list -f '{{.GoFiles}}' $tags ./src ./src/build
 	CGO_ENABLED=1 CC=x86_64-w64-mingw32-gcc GOOS=windows GOARCH=amd64 go build -ldflags "$linker_flags" -o $out_dir/$out_name $tags ./src
 	mv $out_dir/$out_name $windows_out_dir
 	if [ "$release_flag" == "false" ]; then

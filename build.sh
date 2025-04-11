@@ -1,8 +1,28 @@
 #!/bin/env bash
 
+color_reset="\033[0m"
+color_red="\033[31m"
+color_green="\033[32m"
+color_yellow="\033[33m"
+color_blue="\033[34m"
+color_cyan="\033[36m"
+color_magenta="\033[35m"
+
 usage() {
 	printf "Usage: $0 [windows][run][release][clean] \n\n\twindows:  build for windows, leave empty for building for linux. If you are compiling for windows make sure to change the windows_user variable in this script\n\trun:      run the built file after building\n\trelease:  build with release flags\n\tclean:    clean the output directory\n"
 	exit 1
+}
+
+log_info() {
+	printf "${color_cyan}$1${color_reset}\n"
+}
+
+log_error() {
+	printf "${color_red}$1${color_reset}\n"
+}
+
+log_success() {
+	printf "${color_green}$1${color_reset}\n"
 }
 
 project_name="testbed"
@@ -57,10 +77,6 @@ fi
 
 # check if parameter one exist and is equal to "windows"
 if [ "$windows_flag" == "true" ]; then
-	if [ "$run_flag" == "true" ]; then
-		echo "run flag is not supported for windows"
-		run_flag=false
-	fi
 
 	windows_out_dir="/mnt/c/Users/$windows_user/Desktop/game_engine/$project_name"
 	if [ ! -d "$windows_out_dir" ]; then
@@ -69,37 +85,68 @@ if [ "$windows_flag" == "true" ]; then
 	out_name="$out_name.exe"
 
 	if [ "$clean_flag" == "true" ]; then
-		echo "Cleaning previous file"
+		log_info "Cleaning previous file"
 		rm $out_dir/$out_name 2>/dev/null
 	fi
 
 	echo "tags: $tags"
-	echo "Building for windows"
-	set -x
-	GOOS=windows go list -f '{{.GoFiles}}' $tags ./src ./src/build
-	CGO_ENABLED=1 CC=x86_64-w64-mingw32-gcc GOOS=windows GOARCH=amd64 go build -ldflags "$linker_flags" -o $out_dir/$out_name $tags ./src
+	log_info "Packages to build:"
+	GOOS=windows go list -f '{{.GoFiles}}' $tags ./src/...
+
+	log_info "Building for windows"
+	error_output=$(CGO_ENABLED=1 CC=x86_64-w64-mingw32-gcc GOOS=windows GOARCH=amd64 go build -ldflags "$linker_flags" -o $out_dir/$out_name $tags ./src 2>&1)
+
+	if [ $? -ne 0 ]; then
+		log_error "Build failed with error:"
+		echo "----------------------------------"
+		echo "$error_output"
+		exit 1
+	else
+		log_success "Build succeeded"
+	fi
+
+	log_info "Moving file to $windows_out_dir"
 	mv $out_dir/$out_name $windows_out_dir
 	if [ "$release_flag" == "false" ]; then
 		printf "$out_name\npause\n" >$windows_out_dir/debug_run.bat
 	fi
-	set +x
+
+	log_success "Done Building"
+	echo "---------------------------------"
+
+	if [ "$run_flag" == "true" ]; then
+		log_info "Running the built file"
+		powershell.exe -command "C:/Users/$windows_user/Desktop/game_engine/$project_name/$out_name"
+	fi
 
 else
 	if [ "$clean_flag" == "true" ]; then
-		echo "Cleaning previous file"
+		log_info "Cleaning previous file"
 		rm $project_dir/$out_dir/$out_name #2>/dev/null
 	fi
+
 	echo "tags: $tags"
-	echo "Building for linux"
-	set -x
+
+	log_info "Packages to build:"
 	go list -f '{{.GoFiles}}' $tags $project_dir/src $project_dir/src/build
 
-	go build -ldflags "$linker_flags" -o $project_dir/$out_dir/$out_name $tags $project_dir/src
-	set +x
-fi
+	log_info "Building for linux"
+	error_output=$(go build -ldflags "$linker_flags" -o $project_dir/$out_dir/$out_name $tags $project_dir/src)
 
-printf "Done Building\n---------------------------------\n\n\n"
+	if [ $? -ne 0 ]; then
+		log_error "Build failed with error:"
+		echo "----------------------------------"
+		echo "$error_output"
+		exit 1
+	else
+		log_success "Build succeeded"
+	fi
 
-if [ "$run_flag" == "true" ]; then
-	$project_dir/$out_dir/$out_name
+	log_success "Done Building"
+	echo "---------------------------------"
+
+	if [ "$run_flag" == "true" ]; then
+		log_info "Running the built file"
+		$project_dir/$out_dir/$out_name
+	fi
 fi

@@ -78,8 +78,9 @@ fi
 # check if parameter one exist and is equal to "windows"
 if [ "$windows_flag" == "true" ]; then
 
-	windows_out_dir="/mnt/c/Users/$windows_user/Desktop/game_engine/$project_name"
+	windows_out_dir="/mnt/c/Users/$windows_user/Desktop/go_projects/game_engine/$project_name"
 	if [ ! -d "$windows_out_dir" ]; then
+		log_info "Creating directory $windows_out_dir"
 		mkdir -p $windows_out_dir
 	fi
 	out_name="$out_name.exe"
@@ -116,7 +117,7 @@ if [ "$windows_flag" == "true" ]; then
 
 	if [ "$run_flag" == "true" ]; then
 		log_info "Running the built file"
-		powershell.exe -command "C:/Users/$windows_user/Desktop/game_engine/$project_name/$out_name"
+		powershell.exe -command "C:/Users/$windows_user/Desktop/go_projects/game_engine/$project_name/$out_name"
 	fi
 
 else

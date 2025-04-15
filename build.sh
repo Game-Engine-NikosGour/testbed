@@ -92,7 +92,7 @@ if [ "$windows_flag" == "true" ]; then
 
 	echo "tags: $tags"
 	log_info "Packages to build:"
-	GOOS=windows go list -f '{{.GoFiles}}' $tags ./src/...
+	CGO_ENABLED=1 CC=x86_64-w64-mingw32-gcc GOOS=windows GOARCH=amd64 go list -f '{{.GoFiles}}' $tags ./src/...
 
 	log_info "Building for windows"
 	error_output=$(CGO_ENABLED=1 CC=x86_64-w64-mingw32-gcc GOOS=windows GOARCH=amd64 go build -ldflags "$linker_flags" -o $out_dir/$out_name $tags ./src 2>&1)

@@ -14,7 +14,7 @@ import (
 func main() {
 	fmt.Printf("DEBUG_MODE = %t\n", build.DEBUG_MODE)
 	game_lib.Add(2, 3)
-	plat_state := &platform_types.PlatformState{}
+	plat_state := platform_types.NewPlatformState()
 	err := platform.Platform_startup(plat_state, "Nikos", 0, 0, 800, 600)
 	if err != nil {
 		log.Fatal("%s", err)
